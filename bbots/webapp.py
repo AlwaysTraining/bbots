@@ -1,12 +1,14 @@
 import time
 from bbots.webdata import WebData
 from bbots.webui import WebUi
+from bbots.session import Session
 import random
 import logging
 from datetime import datetime
 from datetime import timedelta
 
-SCHEDULER_PERIOD = 5
+# 15 minutes
+SCHEDULER_PERIOD = 15 * 60
 # it will always be 24 hours for the game period, but you can adjust for
 # testing
 GAME_PERIOD = 24 * 60 * 60

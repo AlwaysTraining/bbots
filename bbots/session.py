@@ -1,4 +1,4 @@
-from bbots.bbot import App
+from bbot.App import App
 import logging
 
 
