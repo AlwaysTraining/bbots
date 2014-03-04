@@ -5,7 +5,7 @@ class WebUi:
 
 
     def __init__(self):
-        self.header = [ 'status','id','realm','address' ]
+        self.header = [ 'status','id','realm','address','last_attempt' ]
         self.history_table_data = []
     def on_game_in_progress(self, rec):
         ui_row=[]

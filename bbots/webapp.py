@@ -42,9 +42,9 @@ class WebApp(object):
 
 
         if s.success == True:
-            rec['last_success'] = now
             rec['successes'] += 1
             rec['status'] = "success"
+            rec['last_completed_all_turns'] = datetime.now()
         else:
             rec['failures'] += 1
             rec['status'] = "failure"
