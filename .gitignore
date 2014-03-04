@@ -1,0 +1,19 @@
+*.py[cod]
+*.swp
+
+cron.lock
+bbots.sh
+
+# Installer logs
+pip-log.txt
+
+*.log*
+*.out*
+*_log.txt
+*_out.txt
+
+sweng/bbot_*
+
+# ignore all pycharm files
+.idea
+idea/*

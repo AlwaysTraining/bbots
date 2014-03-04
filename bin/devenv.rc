@@ -1,0 +1,17 @@
+#!/bin/bash                                                                                                          
+
+# Path to your own script
+# http://stackoverflow.com/questions/4774054/reliable-way-for-a-bash-script-to-get-the-full-path-to-itself
+pushd . > /dev/null
+bbots_SCRIPT_PATH="${BASH_SOURCE[0]}";
+  while([ -h "${bbots_SCRIPT_PATH}" ]) do
+    cd "`dirname "${bbots_SCRIPT_PATH}"`"
+    bbots_SCRIPT_PATH="$(readlink "`basename "${bbots_SCRIPT_PATH}"`")";
+  done
+cd "`dirname "${bbots_SCRIPT_PATH}"`" > /dev/null
+bbots_SCRIPT_PATH="`pwd`";
+popd  > /dev/null
+
+export bbots_ROOT=$(dirname $bbots_SCRIPT_PATH)
+export PYTHONPATH=:$PYTHONPATH:$bbots_ROOT
+export PATH=$PATH:$bbots_ROOT/bin

@@ -1,0 +1,9 @@
+bbots requirements
+-----------------
+
+Log in to arbitrary bbs given a username and password
+Navigate to the main menu
+
+    
+
+
