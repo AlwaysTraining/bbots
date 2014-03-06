@@ -14,8 +14,9 @@ def main():
 
 
     logging.basicConfig(
-        # filename='bbots.log',
-        level=logging.DEBUG)
+        format='%(asctime)s:%(levelname)s::%(message)s',
+        level=logging.DEBUG,
+        filename='bbotsd.log')
 
     app = WebApp()
     wd = cherrypy.process.plugins.BackgroundTask(app.scheduler_period,

@@ -8,7 +8,7 @@ from datetime import datetime
 from datetime import timedelta
 
 # 15 minutes
-SCHEDULER_PERIOD = 15 * 60
+SCHEDULER_PERIOD = 1 * 60
 # it will always be 24 hours for the game period, but you can adjust for
 # testing
 GAME_PERIOD = 24 * 60 * 60
@@ -71,13 +71,15 @@ class WebApp(object):
         first_play = midnight + timedelta(hours=rec[
             'hour_delay_from_midnight_to_first_play'])
 
+        logging.debug("The earliest time of the day I would consider playing is: " + str(first_play))
+
         now = datetime.now()
 
         too_early = now < first_play
         if too_early:
-            logging.debug("It is too early in the day to play: " + id)
+            logging.debug("It is too early in the day to play, we must wait until " + 
+                    str(first_play))
             return False
-
 
         if 'last_attempt' in rec:
             last_attempt = rec['last_attempt']
@@ -86,10 +88,14 @@ class WebApp(object):
 
 
         if last_attempt is not None:
-            just_tried = now < (
-                last_attempt + timedelta(minutes=random.randint(45,75)))
-            if just_tried:
-                logging.debug("we just tried to play: " + id)
+            time_since_last_play = now - last_attempt
+
+            required_time_since_last_play = timedelta(minutes=random.randint(45,75))
+
+            if time_since_last_play < required_time_since_last_play:
+                logging.debug("we just played: " + str(time_since_last_play) +
+                        " ago, but it is required we wait at least " + 
+                        str(required_time_since_last_play))
                 return False
 
         if 'last_completed_all_turns' in rec:
@@ -97,12 +103,13 @@ class WebApp(object):
         else:
             last_completed_all_turns = None
 
-        next_play = first_play + timedelta(minutes=GAME_PERIOD)
+#        next_play = first_play + timedelta(minutes=GAME_PERIOD)
 
         if last_completed_all_turns is not None:
-            already_played = last_completed_all_turns < next_play
+            already_played = last_completed_all_turns > first_play
             if already_played:
-                logging.debug("We already used all of our turns today")
+                logging.debug("We already used all of our turns today at: " + 
+                    str(last_completed_all_turns))
                 return False
 
 
