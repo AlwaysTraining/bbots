@@ -86,7 +86,7 @@ class WebApp(object):
 
 
         if last_attempt is not None:
-            just_tried = now > (
+            just_tried = now < (
                 last_attempt + timedelta(minutes=random.randint(45,75)))
             if just_tried:
                 logging.debug("we just tried to play: " + id)
