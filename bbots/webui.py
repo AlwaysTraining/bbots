@@ -35,9 +35,9 @@ class WebUi:
 
     def index(self):
         history_table = Table(header_row=self.header)
-        for table_data_row in self.history_table_data:
+        for table_data_row in reversed(self.history_table_data):
             history_row = []
-            for colindex in reversed(xrange(len(table_data_row))):
+            for colindex in range(len(table_data_row)):
                 colname = self.header[colindex]
                 colvalue = table_data_row[colindex]
                 color = 'White'
@@ -45,6 +45,8 @@ class WebUi:
                     if colvalue == 'in progress':
                         color = 'Yellow'
                     elif colvalue == 'success':
+                        color = 'Green'
+                    else:
                         color = 'Red'
 
                 history_row.append(TableCell(colvalue,bgcolor=color))

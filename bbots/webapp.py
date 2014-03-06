@@ -7,8 +7,8 @@ import logging
 from datetime import datetime
 from datetime import timedelta
 
-# 15 minutes
-SCHEDULER_PERIOD = 1 * 60
+# 60 minutes
+SCHEDULER_PERIOD = 60*60
 # it will always be 24 hours for the game period, but you can adjust for
 # testing
 GAME_PERIOD = 24 * 60 * 60
@@ -124,6 +124,9 @@ class WebApp(object):
         """
         Randomly try to play until we get into at least one bre game
         """
+        sleeptime = random.randint(0,SCHEDULER_PERIOD/2)
+        logging.info("Randomly sleeping for " + str(round(sleeptime/60.0,1)) + " minutes")
+        time.sleep(sleeptime)
         self.data.load_ss()
         ids = list(self.data.ids)
         random.shuffle(ids)
