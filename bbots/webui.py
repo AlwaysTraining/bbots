@@ -33,7 +33,7 @@ class WebUi:
                 ui_row[header_col_index] = rec[header_col]
 
 
-    def index(self):
+    def botdash(self):
         history_table = Table(header_row=self.header)
         for table_data_row in reversed(self.history_table_data):
             history_row = []
@@ -71,4 +71,4 @@ class WebUi:
         return ''.join(html)
 
 
-    index.exposed = True
+    botdash.exposed = True
