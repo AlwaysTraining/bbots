@@ -38,22 +38,24 @@ class WebApp(object):
 
         self.data.update_rec(rec)
         ui_row_num = self.webui.on_game_in_progress(rec)
-        s = Session(rec)
+        try:
+            s = Session(rec)
 
-
-        if s.success == True:
-            rec['successes'] += 1
-            rec['status'] = "success"
-            rec['last_completed_all_turns'] = datetime.now()
-        else:
-            rec['failures'] += 1
-            rec['status'] = "failure"
-
-
-
-
-        self.data.update_rec(rec)
-        self.webui.on_update_ui_row(ui_row_num, rec)
+            if s.success == True:
+                rec['successes'] += 1
+                rec['status'] = "success"
+                rec['last_completed_all_turns'] = datetime.now()
+            else:
+                rec['failures'] += 1
+                rec['status'] = "failure"
+        except Exception as e:
+            logging.error("An exception escaped from the session object")
+            logging.exception(e)
+        finally:
+            logging.info("Updating persistant information")
+            self.data.update_rec(rec)
+            self.webui.on_update_ui_row(ui_row_num, rec)
+            logging.info("Done playing game")
         return True
 
 
