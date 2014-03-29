@@ -15,6 +15,9 @@ class WebUi:
         self.header = [ 'status','id','realm','address','last_attempt' ]
         self.history_table_data = []
         self.refresh_time = DEFAULT_REFRESH_TIME
+        self.weblogfile = None
+        self.bbotslogfile = None
+
     def on_game_in_progress(self, rec):
         ui_row=[]
         for header_col in self.header:
@@ -72,3 +75,33 @@ class WebUi:
 
 
     botdash.exposed = True
+
+    def log_page(self,filepath):
+
+        html = []
+        html.append("<head>")
+        html.append('<meta http-equiv="Refresh" content="' + 
+                str(60) +'">')
+        html.append("</head>")
+        html.append("<body>")
+
+        if self.bbotslogfile is None:
+            html.append("No log file set")
+        else:
+
+            html.append("<pre>")
+            cmd = "$(which tail) -n 1000 " + str(filepath)
+            output = Popen(cmd, stdout=PIPE, shell=True).communicate()[0]
+            html.append(output)
+            html.append("</pre>")
+
+        html.append("</body>")
+        return ''.join(html)
+
+    def botlog(self):
+        return self.log_page(self.bbotslogfile)
+    botlog.exposed = True
+
+    def weblog(self):
+        return self.log_page(self.weblogfile)
+    weblog.exposed = True

@@ -18,7 +18,15 @@ def main():
         level=logging.DEBUG,
         filename='bbotsd.log')
 
-    app = WebApp()
+    botlogfile = os.path.join(
+            os.getcwd(),'bbotsd.log')
+
+    # this is a hack, hardcode weblog file, which is set in the startup script
+    # start.sh
+    weblogfile = os.path.join(
+            os.getcwd(),'webapp.log')
+
+    app = WebApp(botlogfile, weblogfile)
     wd = cherrypy.process.plugins.BackgroundTask(app.scheduler_period,
                                                  app.scheduler_task)
     wd.start()

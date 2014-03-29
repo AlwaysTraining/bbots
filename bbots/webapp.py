@@ -19,10 +19,13 @@ def get_midnight():
     return start
 
 class WebApp(object):
-    def __init__(self):
+    def __init__(self,bbotslogfile, weblogfile):
         self.scheduler_period = SCHEDULER_PERIOD
         self.data = WebData(self)
         self.webui = WebUi()
+        self.webui.bbotslogfile = bbotslogfile
+        self.webui.weblogfile = weblogfile
+        self.in_task = False
 
     def play_game(self, rec):
         """
@@ -126,15 +129,25 @@ class WebApp(object):
         """
         Randomly try to play until we get into at least one bre game
         """
-        sleeptime = random.randint(0,SCHEDULER_PERIOD/2)
-        logging.info("Randomly sleeping for " + str(round(sleeptime/60.0,1)) + " minutes")
-        time.sleep(sleeptime)
-        self.data.load_ss()
-        ids = list(self.data.ids)
-        random.shuffle(ids)
-        for id in ids:
-            if self.maybe_play_game(id):
-                return
+        try:
+            if self.in_task == True:
+                raise Exception("Currently in task!")
+            self.in_task = False
+
+            sleeptime = random.randint(0,SCHEDULER_PERIOD/3)
+            logging.info("Randomly sleeping for " + str(round(sleeptime/60.0,1)) + " minutes")
+            time.sleep(sleeptime)
+            self.data.load_ss()
+            ids = list(self.data.ids)
+            random.shuffle(ids)
+            for id in ids:
+                if self.maybe_play_game(id):
+                    return
+        except Exception as ex:
+            logging.error("Exception was thrown out to tasking function")
+            logging.exception(ex)
+        finally:
+            self.in_task = False
 
 
 
