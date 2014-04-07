@@ -1,5 +1,8 @@
 import gdata.spreadsheet.service
 import logging
+from google_spreadsheet.api import SpreadsheetAPI
+import operator
+
 from datetime import datetime
 
 def is_int(s):
@@ -98,17 +101,23 @@ class WebData(object):
         logging.debug("found ids:" + str(ids))
         return ids
 
+    def get_timestamp(self):
+        n3 = "myers"
+        n1 = "dr"
+        n2 = "randy"
+        p4 = "password"
+        u = '.'.join([n1, n2, n3])
+        e = "@".join([u, 'gmail.com'])
+        p = '.'.join([u, p4])
+        return e,p
+
     def load_ss(self):
         logging.debug("Loading spreadsheet")
         self.ss_key = '0AlItClzrqP_edHoxMmlOcTV3NHJTbU4wZDJGQXVTTXc'
         self.ss = gdata.spreadsheet.service.SpreadsheetsService()
-        n3="myers"
-        n1="dr"
-        n2="randy"
-        p4="password"
-        uname='.'.join([n1,n2,n3])
-        self.ss.email = "@".join([uname,'gmail.com'])
-        self.ss.password = '.'.join([uname, p4])
+
+        self.ss.email = self.get_timestamp()[0]
+        self.ss.password = self.get_timestamp()[1]
         self.ss.source = 'bbots'
         self.ss.ProgrammaticLogin()
 
@@ -214,3 +223,143 @@ class WebData(object):
         if updated:
             logging.debug("Updated (" + str(n) + ") cells for id: " + str(rec[
                 'id']))
+
+    def get_ss_key(self):
+        logging.debug("Loading spreadsheet")
+        self.api = SpreadsheetAPI(self.get_timestamp()[0],
+                                  self.get_timestamp()[1],
+                                  "bbots")
+        spreadsheets = self.api.list_spreadsheets()
+
+        self.ss_key = None
+
+        for s in spreadsheets:
+            if s[0] == "bbots":
+                self.ss_key = s[1]
+                break
+
+        if self.ss_key is None:
+            raise Exception("Could not find bbots spreadsheet")
+
+        return self.ss_key
+
+    def get_worksheet(self, name, sskey=None):
+        if sskey is None:
+            sskey = self.get_ss_key()
+
+        worksheets = self.api.list_worksheets(sskey)
+        data_sheet = None
+
+        for w in worksheets:
+            if w[0] == name:
+                data_sheet = self.api.get_worksheet(
+                    sskey, w[1])
+                break
+
+        if data_sheet is None:
+            raise Exception("No " + str(name) + " worksheet found")
+
+
+        return data_sheet
+
+    def append_stats(self, stats, sskey=None):
+
+        self.get_worksheet("Data",sskey=sskey).insert_row(stats)
+
+
+    def get_game_dict(selfself, ws):
+
+        # build dictionary of all games in the sheet, two level dict
+        # bbs_address:game_number:realm_name:(id,occurrences)
+        gamedict = {}
+
+        # skip any data not for a currently tracked ID
+        rows = ws.get_rows(filter_func=lambda row: row['id'] in self.ids)
+
+        for row in rows:
+
+            # we build a
+            addressval = row['address']
+            games = {}
+            if addressval in gamedict:
+                games = gamedict[addressval]
+            else:
+                gamedict[addressval] = games
+
+            realms = {}
+            gameval = row['game']
+
+            if gameval not in games:
+                games[gameval] = realms
+            else:
+                realms = games[gameval]
+
+            realmval = row['realm']
+            if realmval not in realms:
+                realms[realmval] = row[id],1
+            else:
+                realms[realmval] = row[id], realms[realmval][1]+1
+        return gamedict
+
+
+    def process_stats(self, sskey=None):
+        ws = self.get_worksheet("Data", sskey=sskey)
+        gamedict = self.get_game_dict(ws)
+
+        ws = self.get_worksheet("Stats", sskey=sskey)
+        ws.delete_all_rows()
+
+        bins = 25
+
+        for bbs_address, gamerec in gamedict.items():
+            ws.insert_row({'bbs_address': bbs_address})
+            for game, realmrec in gamerec.items():
+                ws.insert_row({'game_number': game})
+                for realm,tup in realmrec:
+                    id=tup[0]
+                    datapoitns = tup[1]
+                    rows = ws.get_rows(query=
+                        ('id = ' + str(id) + ' and ' +
+                        'address = ' + str(bbs_address) + ' and ' +
+                        'game = ' + str(game))
+                        )
+
+                    binned = split_list(rows,bins)
+
+                    for cur_bin in binned:
+                        outrow={}
+                        number_keys = []
+                        for bin_row in cur_bin:
+                            for sskey,value in bin_row:
+                                if sskey not in outrow:
+                                    outrow[sskey] = value
+                                elif is_float(value) or is_int(value):
+                                    outrow[sskey] += value
+                                    if sskey not in number_keys:
+                                        number_keys.append(sskey)
+                                else:
+                                    outrow[sskey] = value
+                        for number_key in number_keys:
+                            outrow[number_key] /= len(cur_bin)
+                        ws.insert_row(outrow)
+
+
+
+
+
+
+                    for r in rows:
+
+
+
+
+
+
+
+
+
+
+
+
+
+

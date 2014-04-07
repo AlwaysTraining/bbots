@@ -27,6 +27,15 @@ class WebApp(object):
         self.webui.weblogfile = weblogfile
         self.in_task = False
 
+    def clean_stats(self, stats, app):
+        for key in stats.keys():
+            stats[key] = str(stats[key])
+        for k,v in app.options:
+            if k in stats:
+                raise Exception("Key collision in stats collection")
+            stats[k] = v
+
+
     def play_game(self, rec):
         """
         Play the game specified in the record
@@ -48,6 +57,13 @@ class WebApp(object):
                 rec['successes'] += 1
                 rec['status'] = "success"
                 rec['last_completed_all_turns'] = datetime.now()
+                # blindly dump all parsed game data to dictionary
+                stats = s.app.data.get_realm_dict()
+                # clean stats taple for tample
+                self.clean_stats(stats, app)
+                key = self.data.get_ss_key()
+                self.data.append_stats(stats,sskey=key)
+                self.data.update_stats(sskey=key)
             else:
                 rec['failures'] += 1
                 rec['status'] = "failure"
