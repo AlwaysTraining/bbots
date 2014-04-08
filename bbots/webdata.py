@@ -59,6 +59,37 @@ def is_bool(s):
     except:
         return False
 
+
+def bin_list(terms, numbins):
+    """
+    Map the input terms into list of list of terms.  Because the numbins will
+    likely not divide the number of terms evenly, items can be duplicated, or
+    the returned set of sub lists will not have the same number of terms in
+    them
+    """
+    termsPerBin = len(terms) / float(numbins)
+
+    splitterms = []
+    if termsPerBin < 1:
+
+        for curbinnum in xrange(numbins):
+            termindex = int(curbinnum * termsPerBin)
+            splitterms.append([terms[termindex]])
+        return splitterms
+
+
+    termsPerBin = numbins/float(len(terms))
+
+    for curTerm in xrange(len(terms)):
+        floatindex = curTerm*termsPerBin
+        binindex = int(floatindex)
+        if binindex >= len(splitterms):
+            splitterms.append([])
+        splitterms[-1].append(terms[curTerm])
+
+    return splitterms
+
+
 class WebData(object):
 
     def get_feed(self,query):
@@ -348,7 +379,7 @@ class WebData(object):
 
 
 
-                    for r in rows:
+                    #for r in rows:
 
 
 
