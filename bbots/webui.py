@@ -3,7 +3,9 @@ from HTML import TableCell
 from Queue import Queue
 from subprocess import Popen
 from subprocess import PIPE
+
 import bbot.botlog
+import traceback
 
 
 DEFAULT_REFRESH_TIME = 60*60
@@ -105,3 +107,11 @@ class WebUi:
     def weblog(self):
         return self.log_page(self.weblogfile)
     weblog.exposed = True
+
+    def botstats(self):
+        try:
+            self.app.data.process_stats()
+            return "<body><pre>Success</pre></body>"
+        except:
+            return "<body><pre>" + traceback.format_exc() + "</pre></body>"
+

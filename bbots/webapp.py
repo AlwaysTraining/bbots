@@ -63,7 +63,7 @@ class WebApp(object):
                 self.clean_stats(stats, app)
                 key = self.data.get_ss_key()
                 self.data.append_stats(stats,sskey=key)
-                self.data.update_stats(sskey=key)
+                self.data.process_stats(sskey=key)
             else:
                 rec['failures'] += 1
                 rec['status'] = "failure"

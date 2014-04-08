@@ -348,49 +348,42 @@ class WebData(object):
                 ws.insert_row({'game_number': game})
                 for realm,tup in realmrec:
                     id=tup[0]
-                    datapoitns = tup[1]
+                    datapoints = tup[1]
                     rows = ws.get_rows(query=
                         ('id = ' + str(id) + ' and ' +
                         'address = ' + str(bbs_address) + ' and ' +
                         'game = ' + str(game))
                         )
 
-                    binned = split_list(rows,bins)
+                    binned = bin_list(rows,bins)
 
                     for cur_bin in binned:
                         outrow={}
-                        number_keys = []
+                        number_keys = {}
                         for bin_row in cur_bin:
-                            for sskey,value in bin_row:
-                                if sskey not in outrow:
-                                    outrow[sskey] = value
-                                elif is_float(value) or is_int(value):
-                                    outrow[sskey] += value
+                            for sskey,value in bin_row.items():
+                                if is_float(value) or is_int(value):
                                     if sskey not in number_keys:
-                                        number_keys.append(sskey)
+                                        number_keys[sskey] = 1
+                                    else:
+                                        number_keys[sskey] += 1
+
+                                    if is_int(value):
+                                        value = int(value)
+                                    else:
+                                        value = float(value)
+
+                                    if sskey not in outrow:
+                                        outrow[sskey] = value
+                                    else:
+                                        outrow[sskey] += value
                                 else:
                                     outrow[sskey] = value
-                        for number_key in number_keys:
-                            outrow[number_key] /= len(cur_bin)
+
+                                    value = float(value)
+
+
+                        for number_key, n in number_keys.items():
+                            outrow[number_key] /= n
+
                         ws.insert_row(outrow)
-
-
-
-
-
-
-                    #for r in rows:
-
-
-
-
-
-
-
-
-
-
-
-
-
-
