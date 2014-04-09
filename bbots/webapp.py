@@ -9,6 +9,7 @@ from datetime import timedelta
 
 # 60 minutes
 SCHEDULER_PERIOD = 60*60
+SCHEDULER_PERIOD = 1
 # it will always be 24 hours for the game period, but you can adjust for
 # testing
 GAME_PERIOD = 24 * 60 * 60
@@ -50,6 +51,8 @@ class WebApp(object):
 
         self.data.update_rec(rec)
         ui_row_num = self.webui.on_game_in_progress(rec)
+        s = None
+
         try:
             s = Session(rec)
 
@@ -57,13 +60,7 @@ class WebApp(object):
                 rec['successes'] += 1
                 rec['status'] = "success"
                 rec['last_completed_all_turns'] = datetime.now()
-                # blindly dump all parsed game data to dictionary
-                stats = s.app.data.get_realm_dict()
-                # clean stats taple for tample
-                self.clean_stats(stats, app)
-                key = self.data.get_ss_key()
-                self.data.append_stats(stats,sskey=key)
-                self.data.process_stats(sskey=key)
+
             else:
                 rec['failures'] += 1
                 rec['status'] = "failure"
@@ -71,6 +68,15 @@ class WebApp(object):
             logging.error("An exception escaped from the session object")
             logging.exception(e)
         finally:
+
+            # blindly dump all parsed game data to dictionary
+            stats = s.app.data.get_realm_dict()
+            # clean stats taple for tample
+            self.clean_stats(stats, s.app)
+            key = self.data.get_ss_key()
+            self.data.append_stats(stats,sskey=key)
+            self.data.process_stats(sskey=key)
+
             logging.info("Updating persistant information")
             self.data.update_rec(rec)
             self.webui.on_update_ui_row(ui_row_num, rec)
