@@ -28,9 +28,7 @@ class WebApp(object):
         self.webui.weblogfile = weblogfile
         self.in_task = False
 
-    def clean_stats(self, stats, app):
-        for key in stats.keys():
-            stats[key] = str(stats[key])
+    def append_stats(self, stats, app):
         for k,v in app.options:
             if k in stats:
                 raise Exception("Key collision in stats collection")
