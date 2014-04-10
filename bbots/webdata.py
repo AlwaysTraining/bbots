@@ -333,57 +333,97 @@ class WebData(object):
         return gamedict
 
 
+    def append_stats_rows(self, game_rows, num_bins, stats_ws):
+
+        row_bins = bin_list(game_rows, num_bins)
+
+        for cur_bin_index in xrange(len(row_bins)):
+            cur_bin = row_bins[cur_bin_index]
+            outrow = {}
+            outrow['bin_index'] = cur_bin_index
+            number_keys = {}
+            for bin_row in cur_bin:
+                for sskey, value in bin_row.items():
+                    if is_float(value) or is_int(value):
+                        if sskey not in number_keys:
+                            number_keys[sskey] = 1
+                        else:
+                            number_keys[sskey] += 1
+
+                        if is_int(value):
+                            value = int(value)
+                        else:
+                            value = float(value)
+
+                        if sskey not in outrow:
+                            outrow[sskey] = value
+                        else:
+                            outrow[sskey] += value
+                    else:
+                        outrow[sskey] = value
+
+
+            # perform averaging of all stats in bins for each row for total history
+            for number_key, n in number_keys.items():
+                outrow[number_key] /= n
+
+            # Now update the "last n" rows for the imediate history
+
+            # calculate the n'th row from the last index
+            hist_bin_index = len(game_rows) - num_bins + cur_bin_index
+            if hist_bin_index < 0:
+                hist_bin_index = 0
+            elif hist_bin_index >= len(game_rows):
+                hist_bin_index = len(game_rows) - 1
+                raise Exception("This should never happen")
+
+
+            # get the nth row from the last
+            hist_row = game_rows[hist_bin_index]
+
+            # transform the key to indicate this is a historical entry
+            for sskey, value in hist_row.items():
+                newkey = "_last_" + sskey
+                # assign the value in the output row for the new key
+                outrow[newkey] = value
+
+            # get the
+            stats_ws.insert_row(outrow)
+
+    processing_stats = False
+
     def process_stats(self, sskey=None):
-        ws = self.get_worksheet("Data", sskey=sskey)
-        gamedict = self.get_game_dict(ws)
+        if WebData.processing_stats:
+            logging.info("Stats are already being processed")
+            return False
 
-        ws = self.get_worksheet("Stats", sskey=sskey)
-        ws.delete_all_rows()
+        try:
+            WebData.processing_stats = True
 
-        bins = 25
+            ws = self.get_worksheet("Data", sskey=sskey)
+            gamedict = self.get_game_dict(ws)
 
-        for bbs_address, gamerec in gamedict.items():
-            ws.insert_row({'bbs_address': bbs_address})
-            for game, realmrec in gamerec.items():
-                ws.insert_row({'game_number': game})
-                for realm,tup in realmrec:
-                    id=tup[0]
-                    datapoints = tup[1]
-                    rows = ws.get_rows(query=
-                        ('id = ' + str(id) + ' and ' +
-                        'address = ' + str(bbs_address) + ' and ' +
-                        'game = ' + str(game))
-                        )
+            ws = self.get_worksheet("Stats", sskey=sskey)
+            ws.delete_all_rows()
 
-                    binned = bin_list(rows,bins)
+            bins = 25
 
-                    for cur_bin in binned:
-                        outrow={}
-                        number_keys = {}
-                        for bin_row in cur_bin:
-                            for sskey,value in bin_row.items():
-                                if is_float(value) or is_int(value):
-                                    if sskey not in number_keys:
-                                        number_keys[sskey] = 1
-                                    else:
-                                        number_keys[sskey] += 1
+            for bbs_address, gamerec in gamedict.items():
+                ws.insert_row({'bbs_address': bbs_address})
+                for game, realmrec in gamerec.items():
+                    ws.insert_row({'game_number': game})
+                    for realm,tup in realmrec:
+                        id=tup[0]
+                        datapoints = tup[1]
+                        rows = ws.get_rows(query=
+                            ('id = ' + str(id) + ' and ' +
+                            'address = ' + str(bbs_address) + ' and ' +
+                            'game = ' + str(game))
+                            )
 
-                                    if is_int(value):
-                                        value = int(value)
-                                    else:
-                                        value = float(value)
+                        self.append_stats_rows(rows, bins, ws)
 
-                                    if sskey not in outrow:
-                                        outrow[sskey] = value
-                                    else:
-                                        outrow[sskey] += value
-                                else:
-                                    outrow[sskey] = value
+        finally:
+            logging.info("Stats are done being processed")
+            WebData.processing_stats = False
 
-                                    value = float(value)
-
-
-                        for number_key, n in number_keys.items():
-                            outrow[number_key] /= n
-
-                        ws.insert_row(outrow)
