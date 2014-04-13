@@ -12,7 +12,6 @@ from bbots.webapp import WebApp
 
 def main():
 
-
     logging.basicConfig(
         format='%(asctime)s:%(levelname)s::%(message)s',
         level=logging.DEBUG,

@@ -9,6 +9,7 @@ from datetime import timedelta
 
 # 60 minutes
 SCHEDULER_PERIOD = 60*60
+SCHEDULER_PERIOD = 5
 # it will always be 24 hours for the game period, but you can adjust for
 # testing
 GAME_PERIOD = 24 * 60 * 60
@@ -22,17 +23,40 @@ class WebApp(object):
     def __init__(self,bbotslogfile, weblogfile):
         self.scheduler_period = SCHEDULER_PERIOD
         self.data = WebData(self)
-        self.webui = WebUi()
+        self.webui = WebUi(self)
         self.webui.bbotslogfile = bbotslogfile
         self.webui.weblogfile = weblogfile
         self.in_task = False
 
-    def append_stats(self, stats, app):
-        for k,v in app.options:
+    def clean_stats(self, stats, app):
+        for k,v in app.options.items():
             if k in stats:
                 raise Exception("Key collision in stats collection")
             stats[k] = v
+        newstats = {}
+        for k,v in stats.items():
+            if 'password' in k:
+                continue
+            if 'menu_option' in k:
+                continue
+            if 'smtp' in k:
+                continue
+            if k == 'bank_investments':
+                v = sum(v)
 
+            newstats[k] = v
+
+        return newstats
+
+
+    def process_stats_data(self, s):
+        # blindly dump all parsed game data to dictionary
+        stats = s.app.data.get_realm_dict()
+        # clean stats table for sample
+        stats = self.clean_stats(stats, s.app)
+        key = self.data.get_ss_key()
+        self.data.append_data_sheet_row(stats, sskey=key)
+        self.data.process_stats(sskey=key)
 
     def play_game(self, rec):
         """
@@ -54,14 +78,9 @@ class WebApp(object):
             if s.success == True:
                 rec['successes'] += 1
                 rec['status'] = "success"
-                rec['last_completed_all_turns'] = datetime.now()
-                # blindly dump all parsed game data to dictionary
-                stats = s.app.data.get_realm_dict()
-                # clean stats table for tample
-                self.append_stats(stats, app)
-                key = self.data.get_ss_key()
-                self.data.append_stats(stats,sskey=key)
-                self.data.process_stats(sskey=key)
+                if s.app.metadata.used_all_turns:
+                    rec['last_completed_all_turns'] = datetime.now()
+                self.process_stats_data(s)
             else:
                 rec['failures'] += 1
                 rec['status'] = "failure"
@@ -84,6 +103,10 @@ class WebApp(object):
         rec = self.data.get_record(id)
         id = str(rec['id'])
         logging.debug("considering playing game: " + id)
+
+        if not rec['enabled']:
+            logging.debug(id +" is disabled")
+            return False
 
         midnight = get_midnight()
 

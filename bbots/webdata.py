@@ -293,9 +293,25 @@ class WebData(object):
 
         return data_sheet
 
-    def append_stats(self, stats, sskey=None):
+    def append_sheet(self, sheet_name, stats, sskey=None):
+        strdict = {}
+        for k,v in stats.items():
+            k = k.replace('_', '-')
+            strdict[k] = str(v)
 
-        self.get_worksheet("Data",sskey=sskey).insert_row(stats)
+        if sskey is None:
+            sskey = self.get_ss_key()
+
+        logging.info(sheet_name + " keys: " + str(strdict.keys()))
+        logging.info(sheet_name + " dict: " + str(strdict))
+
+        self.get_worksheet(sheet_name,sskey=sskey).insert_row(strdict)
+
+    def append_data_sheet_row(self, rowdata, sskey=None):
+        self.append_sheet("Data", rowdata, sskey)
+
+    def append_stats_sheet_row(self, rowdata, sskey=None):
+        self.append_sheet("Stats", rowdata, sskey)
 
 
     def get_game_dict(selfself, ws):
@@ -333,7 +349,7 @@ class WebData(object):
         return gamedict
 
 
-    def append_stats_rows(self, game_rows, num_bins, stats_ws):
+    def append_stats_rows(self, game_rows, num_bins, ss_key=None):
 
         row_bins = bin_list(game_rows, num_bins)
 
@@ -387,12 +403,11 @@ class WebData(object):
                 # assign the value in the output row for the new key
                 outrow[newkey] = value
 
-            # get the
-            stats_ws.insert_row(outrow)
+            self.append_stats_sheet_row(outrow, sskey=ss_key)
 
     processing_stats = False
 
-    def process_stats(self, sskey=None):
+    def process_stats(self, ss_key=None):
         if WebData.processing_stats:
             logging.info("Stats are already being processed")
             return False
@@ -421,7 +436,7 @@ class WebData(object):
                             'game = ' + str(game))
                             )
 
-                        self.append_stats_rows(rows, bins, ws)
+                        self.append_stats_rows(rows, bins, sskey=ss_key)
 
         finally:
             logging.info("Stats are done being processed")
