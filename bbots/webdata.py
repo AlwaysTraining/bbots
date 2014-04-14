@@ -407,7 +407,7 @@ class WebData(object):
 
     processing_stats = False
 
-    def process_stats(self, ss_key=None):
+    def process_stats(self, sskey=None):
         if WebData.processing_stats:
             logging.info("Stats are already being processed")
             return False
@@ -436,7 +436,7 @@ class WebData(object):
                             'game = ' + str(game))
                             )
 
-                        self.append_stats_rows(rows, bins, sskey=ss_key)
+                        self.append_stats_rows(rows, bins, ss_key=sskey)
 
         finally:
             logging.info("Stats are done being processed")

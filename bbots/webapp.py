@@ -56,7 +56,7 @@ class WebApp(object):
         stats = self.clean_stats(stats, s.app)
         key = self.data.get_ss_key()
         self.data.append_data_sheet_row(stats, sskey=key)
-        self.data.process_stats(sskey=key)
+        self.data.process_stats(ss_key=key)
 
     def play_game(self, rec):
         """
