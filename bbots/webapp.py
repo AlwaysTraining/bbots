@@ -8,8 +8,8 @@ from datetime import datetime
 from datetime import timedelta
 
 # 15 minutes
-SCHEDULER_PERIOD = 60*15
-SCHEDULER_PERIOD = 5
+SCHEDULER_PERIOD = 60*1
+
 # it will always be 24 hours for the game period, but you can adjust for
 # testing
 GAME_PERIOD = 24 * 60 * 60
@@ -92,14 +92,6 @@ class WebApp(object):
             logging.error("An exception escaped from the session object")
             logging.exception(e)
         finally:
-
-            # blindly dump all parsed game data to dictionary
-            stats = s.app.data.get_realm_dict()
-            # clean stats taple for tample
-            self.clean_stats(stats, s.app)
-            key = self.data.get_ss_key()
-            self.data.append_stats(stats,sskey=key)
-            self.data.process_stats(sskey=key)
 
             logging.info("Updating persistant information")
             self.data.update_rec(rec)

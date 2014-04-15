@@ -69,11 +69,19 @@ def bin_list(terms, numbins):
     """
     termsPerBin = len(terms) / float(numbins)
 
+    logging.debug("There are " + str(termsPerBin)  + " terms per stats bin")
+
     splitterms = []
     if termsPerBin < 1:
 
         for curbinnum in xrange(numbins):
             termindex = int(curbinnum * termsPerBin)
+            if termindex >= len(terms):
+                raise Exception("For stats bin: " + str(curbinnum) +
+                                ", we calculated a term index: " +
+                                str(termindex) + ", but there are only " +
+                                str(len(terms)) + " terms")
+
             splitterms.append([terms[termindex]])
         return splitterms
 
@@ -294,6 +302,7 @@ class WebData(object):
         return data_sheet
 
     def get_tabbed_list_str(self, col):
+        return str(col)
         keystr = str(col)
         keystr = keystr.replace("'", '')
         keystr = keystr.replace(', ', '\t')
@@ -312,8 +321,15 @@ class WebData(object):
         valstr = self.get_tabbed_list_str(strdict.values())
         logging.info(sheet_name + " keys: " + keystr)
         logging.info(sheet_name + " vals: " + valstr)
+        #
+        # for k,v in strdict.items():
+        #     test = {k:v}
+        #     logging.debug("Inserting " + k + "\t: " + v)
+        #     self.get_worksheet(sheet_name, sskey=sskey).insert_row(test)
 
         self.get_worksheet(sheet_name,sskey=sskey).insert_row(strdict)
+
+
 
     def append_data_sheet_row(self, rowdata, sskey=None):
         self.append_sheet("Data", rowdata, sskey)
@@ -368,6 +384,11 @@ class WebData(object):
             number_keys = {}
             for bin_row in cur_bin:
                 for key, value in bin_row.items():
+
+                    # I think google inserts this attribute automatically
+                    if "rowid" in key:
+                        continue
+
                     if is_float(value) or is_int(value):
                         if key not in number_keys:
                             number_keys[key] = 1
@@ -407,7 +428,10 @@ class WebData(object):
 
             # transform the key to indicate this is a historical entry
             for key, value in hist_row.items():
-                newkey = "last_" + key
+                if "rowid" in key:
+                    continue
+
+                newkey = key + "_last"
                 # assign the value in the output row for the new key
                 outrow[newkey] = value
 
@@ -423,30 +447,36 @@ class WebData(object):
         try:
             WebData.processing_stats = True
 
-            ws = self.get_worksheet("Data", sskey=sskey)
-            gamedict = self.get_game_dict(ws)
+            dws = self.get_worksheet("Data", sskey=sskey)
+            gamedict = self.get_game_dict(dws)
 
             ws = self.get_worksheet("Stats", sskey=sskey)
             ws.delete_all_rows()
+            logging.debug("After deletinge there are" +
+                          str(len(ws.get_rows())) + " rows")
 
             bins = 25
 
             for bbs_address, gamerec in gamedict.items():
                 # this line is mainly to seperate sections
-                ws.insert_row({'bbs-address': str(bbs_address)})
+                #ws.insert_row({'bbs-address': str(bbs_address)})
                 for game, realmrec in gamerec.items():
                     # this line is mainly to seperate sections
-                    ws.insert_row({'game-number': str(game)})
+                    #ws.insert_row({'game-number': str(game)})
                     for realm,tup in realmrec.items():
                         # this line is mainly to seperate sections
-                        ws.insert_row({'realm-name': str(game)})
+                        #ws.insert_row({'realm-name': str(realm)})
                         id=tup[0]
                         datapoints = tup[1]
-                        rows = ws.get_rows(query=
-                            ('id = ' + str(id) + ' and ' +
-                            'address = ' + str(bbs_address) + ' and ' +
-                            'game = ' + str(game))
-                            )
+                        qstr = ('id = ' + str(id) + ' and ' +
+                                'address = ' + str(bbs_address) + ' and ' +
+                                'game = ' + str(game))
+
+                        logging.debug("Requesting rows: " + qstr)
+
+                        rows = dws.get_rows(query=qstr)
+
+                        logging.debug("Retrieved " + str(len(rows)) + " rows")
 
                         self.append_stats_rows(rows, bins, sskey=sskey)
 
