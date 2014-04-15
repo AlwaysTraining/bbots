@@ -93,7 +93,7 @@ def bin_list(terms, numbins):
 class WebData(object):
 
     def get_feed(self,query):
-        return self.ss.GetCellsFeed(self.ss_key, query=query,
+        return self.ss.GetCellsFeed(self.sskey, query=query,
                                     visibility='public', projection='values')
 
     def query_columns(self):
@@ -144,7 +144,7 @@ class WebData(object):
 
     def load_ss(self):
         logging.debug("Loading spreadsheet")
-        self.ss_key = '0AlItClzrqP_edHoxMmlOcTV3NHJTbU4wZDJGQXVTTXc'
+        self.sskey = '0AlItClzrqP_edHoxMmlOcTV3NHJTbU4wZDJGQXVTTXc'
         self.ss = gdata.spreadsheet.service.SpreadsheetsService()
 
         self.ss.email = self.get_timestamp()[0]
@@ -159,7 +159,7 @@ class WebData(object):
     def __init__(self, con):
         self.con = con
         self.ss_columns = None
-        self.ss_key = None
+        self.sskey = None
         self.ss = None
         self.ids = None
         self.load_ss()
@@ -225,7 +225,7 @@ class WebData(object):
         # logging.debug("Updating row: " + str(rec))
 
         query = self.get_record_query(rec['id'])
-        cells = self.ss.GetCellsFeed(self.ss_key, query=query,
+        cells = self.ss.GetCellsFeed(self.sskey, query=query,
         #                             visibility='public', projection='values'
         )
         batchRequest = gdata.spreadsheet.SpreadsheetsCellsFeed()
@@ -255,28 +255,28 @@ class WebData(object):
             logging.debug("Updated (" + str(n) + ") cells for id: " + str(rec[
                 'id']))
 
-    def get_ss_key(self):
+    def get_sskey(self):
         logging.debug("Loading spreadsheet")
         self.api = SpreadsheetAPI(self.get_timestamp()[0],
                                   self.get_timestamp()[1],
                                   "bbots")
         spreadsheets = self.api.list_spreadsheets()
 
-        self.ss_key = None
+        self.sskey = None
 
         for s in spreadsheets:
             if s[0] == "bbots":
-                self.ss_key = s[1]
+                self.sskey = s[1]
                 break
 
-        if self.ss_key is None:
+        if self.sskey is None:
             raise Exception("Could not find bbots spreadsheet")
 
-        return self.ss_key
+        return self.sskey
 
     def get_worksheet(self, name, sskey=None):
         if sskey is None:
-            sskey = self.get_ss_key()
+            sskey = self.get_sskey()
 
         worksheets = self.api.list_worksheets(sskey)
         data_sheet = None
@@ -293,6 +293,12 @@ class WebData(object):
 
         return data_sheet
 
+    def get_tabbed_list_str(self, col):
+        keystr = str(col)
+        keystr = keystr.replace("'", '')
+        keystr = keystr.replace(', ', '\t')
+        return keystr
+
     def append_sheet(self, sheet_name, stats, sskey=None):
         strdict = {}
         for k,v in stats.items():
@@ -300,10 +306,12 @@ class WebData(object):
             strdict[k] = str(v)
 
         if sskey is None:
-            sskey = self.get_ss_key()
+            sskey = self.get_sskey()
 
-        logging.info(sheet_name + " keys: " + str(strdict.keys()))
-        logging.info(sheet_name + " dict: " + str(strdict))
+        keystr = self.get_tabbed_list_str(strdict.keys())
+        valstr = self.get_tabbed_list_str(strdict.values())
+        logging.info(sheet_name + " keys: " + keystr)
+        logging.info(sheet_name + " vals: " + valstr)
 
         self.get_worksheet(sheet_name,sskey=sskey).insert_row(strdict)
 
@@ -314,7 +322,7 @@ class WebData(object):
         self.append_sheet("Stats", rowdata, sskey)
 
 
-    def get_game_dict(selfself, ws):
+    def get_game_dict(self, ws):
 
         # build dictionary of all games in the sheet, two level dict
         # bbs_address:game_number:realm_name:(id,occurrences)
@@ -343,13 +351,13 @@ class WebData(object):
 
             realmval = row['realm']
             if realmval not in realms:
-                realms[realmval] = row[id],1
+                realms[realmval] = (row['id'],1)
             else:
-                realms[realmval] = row[id], realms[realmval][1]+1
+                realms[realmval] = (row['id'], realms[realmval][1]+1)
         return gamedict
 
 
-    def append_stats_rows(self, game_rows, num_bins, ss_key=None):
+    def append_stats_rows(self, game_rows, num_bins, sskey=None):
 
         row_bins = bin_list(game_rows, num_bins)
 
@@ -359,24 +367,24 @@ class WebData(object):
             outrow['bin_index'] = cur_bin_index
             number_keys = {}
             for bin_row in cur_bin:
-                for sskey, value in bin_row.items():
+                for key, value in bin_row.items():
                     if is_float(value) or is_int(value):
-                        if sskey not in number_keys:
-                            number_keys[sskey] = 1
+                        if key not in number_keys:
+                            number_keys[key] = 1
                         else:
-                            number_keys[sskey] += 1
+                            number_keys[key] += 1
 
                         if is_int(value):
                             value = int(value)
                         else:
                             value = float(value)
 
-                        if sskey not in outrow:
-                            outrow[sskey] = value
+                        if key not in outrow:
+                            outrow[key] = value
                         else:
-                            outrow[sskey] += value
+                            outrow[key] += value
                     else:
-                        outrow[sskey] = value
+                        outrow[key] = value
 
 
             # perform averaging of all stats in bins for each row for total history
@@ -398,12 +406,12 @@ class WebData(object):
             hist_row = game_rows[hist_bin_index]
 
             # transform the key to indicate this is a historical entry
-            for sskey, value in hist_row.items():
-                newkey = "_last_" + sskey
+            for key, value in hist_row.items():
+                newkey = "last_" + key
                 # assign the value in the output row for the new key
                 outrow[newkey] = value
 
-            self.append_stats_sheet_row(outrow, sskey=ss_key)
+            self.append_stats_sheet_row(outrow, sskey=sskey)
 
     processing_stats = False
 
@@ -424,10 +432,14 @@ class WebData(object):
             bins = 25
 
             for bbs_address, gamerec in gamedict.items():
-                ws.insert_row({'bbs_address': bbs_address})
+                # this line is mainly to seperate sections
+                ws.insert_row({'bbs-address': str(bbs_address)})
                 for game, realmrec in gamerec.items():
-                    ws.insert_row({'game_number': game})
-                    for realm,tup in realmrec:
+                    # this line is mainly to seperate sections
+                    ws.insert_row({'game-number': str(game)})
+                    for realm,tup in realmrec.items():
+                        # this line is mainly to seperate sections
+                        ws.insert_row({'realm-name': str(game)})
                         id=tup[0]
                         datapoints = tup[1]
                         rows = ws.get_rows(query=
@@ -436,7 +448,7 @@ class WebData(object):
                             'game = ' + str(game))
                             )
 
-                        self.append_stats_rows(rows, bins, ss_key=sskey)
+                        self.append_stats_rows(rows, bins, sskey=sskey)
 
         finally:
             logging.info("Stats are done being processed")

@@ -41,6 +41,8 @@ class WebApp(object):
                 continue
             if 'smtp' in k:
                 continue
+            if 'num_per_carrier' in k:
+                continue
             if k == 'bank_investments':
                 v = sum(v)
 
@@ -54,9 +56,9 @@ class WebApp(object):
         stats = s.app.data.get_realm_dict()
         # clean stats table for sample
         stats = self.clean_stats(stats, s.app)
-        key = self.data.get_ss_key()
+        key = self.data.get_sskey()
         self.data.append_data_sheet_row(stats, sskey=key)
-        self.data.process_stats(ss_key=key)
+        self.data.process_stats(sskey=key)
 
     def play_game(self, rec):
         """
