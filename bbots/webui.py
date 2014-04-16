@@ -6,6 +6,7 @@ from subprocess import PIPE
 
 import bbot.botlog
 import traceback
+import time
 
 
 DEFAULT_REFRESH_TIME = 60*60
@@ -39,6 +40,17 @@ class WebUi:
                 ui_row[header_col_index] = rec[header_col]
 
 
+    def graphs(self):
+        return (
+"""
+<body>
+<script type="text/javascript" src="//ajax.googleapis.com/ajax/static/modules/gviz/1.0/chart.js">
+{"dataSourceUrl":"//docs.google.com/spreadsheet/tq?key=0AlItClzrqP_edHoxMmlOcTV3NHJTbU4wZDJGQXVTTXc&transpose=0&headers=1&range=A1%3AB9&gid=9&pub=1","options":{"titleTextStyle":{"bold":true,"color":"#000","fontSize":16},"series":{"0":{"color":"#ff0000"}},"animation":{"duration":500},"width":600,"hAxis":{"useFormatFromData":true,"slantedTextAngle":30,"slantedText":true,"minValue":null,"viewWindowMode":null,"textStyle":{"color":"#222","fontSize":"12"},"viewWindow":null,"maxValue":null},"vAxes":[{"title":null,"useFormatFromData":true,"minValue":null,"viewWindow":{"min":null,"max":null},"maxValue":null},{"useFormatFromData":true,"minValue":null,"viewWindow":{"min":null,"max":null},"maxValue":null}],"booleanRole":"certainty","title":"Scores","height":371,"legend":"right","focusTarget":"series","isStacked":false,"tooltip":{}},"state":{},"view":{},"isDefaultVisualization":false,"chartType":"ColumnChart","chartName":"Chart 1"}
+</script></body>
+""")
+    graphs.exposed = True
+
+
     def botdash(self):
         history_table = Table(header_row=self.header)
         for table_data_row in reversed(self.history_table_data):
@@ -64,6 +76,14 @@ class WebUi:
                 str(self.refresh_time) +'">')
         html.append("</head>")
         html.append("<body>")
+
+        html.append(
+"""
+<script type="text/javascript" src="//ajax.googleapis.com/ajax/static/modules/gviz/1.0/chart.js">
+{"dataSourceUrl":"//docs.google.com/spreadsheet/tq?key=0AlItClzrqP_edHoxMmlOcTV3NHJTbU4wZDJGQXVTTXc&transpose=0&headers=1&range=A1%3AB9&gid=9&pub=1","options":{"titleTextStyle":{"bold":true,"color":"#000","fontSize":16},"series":{"0":{"color":"#ff0000"}},"animation":{"duration":500},"width":600,"hAxis":{"useFormatFromData":true,"slantedTextAngle":30,"slantedText":true,"minValue":null,"viewWindowMode":null,"textStyle":{"color":"#222","fontSize":"12"},"viewWindow":null,"maxValue":null},"vAxes":[{"title":null,"useFormatFromData":true,"minValue":null,"viewWindow":{"min":null,"max":null},"maxValue":null},{"useFormatFromData":true,"minValue":null,"viewWindow":{"min":null,"max":null},"maxValue":null}],"booleanRole":"certainty","title":"Scores","height":371,"legend":"right","focusTarget":"series","isStacked":false,"tooltip":{}},"state":{},"view":{},"isDefaultVisualization":false,"chartType":"ColumnChart","chartName":"Chart 1"}
+</script>
+"""
+        )
 
         if bbot.botlog.tracefilepath is not None:
             html.append("<pre>")
@@ -111,8 +131,13 @@ class WebUi:
 
     def botstats(self):
         try:
-            self.con.data.process_stats()
-            return "<body><pre>Success</pre></body>"
+
+            start = time.time()
+            sskey = self.con.data.get_sskey()
+            self.con.data.process_stats(sskey=sskey,cols=self.con.stats_cols)
+            return ("<body><pre>Success in " +
+                str(time.time() - start) +
+                " seconds</pre></body>")
         except:
             return "<body><pre>" + traceback.format_exc() + "</pre></body>"
     botstats.exposed = True

@@ -1,6 +1,7 @@
 import gdata.spreadsheet.service
 import logging
 from google_spreadsheet.api import SpreadsheetAPI
+from pprint import pformat
 import operator
 
 from datetime import datetime
@@ -302,7 +303,8 @@ class WebData(object):
         return data_sheet
 
     def get_tabbed_list_str(self, col):
-        return str(col)
+        col = list(col)
+        col.sort()
         keystr = str(col)
         keystr = keystr.replace("'", '')
         keystr = keystr.replace(', ', '\t')
@@ -319,8 +321,9 @@ class WebData(object):
 
         keystr = self.get_tabbed_list_str(strdict.keys())
         valstr = self.get_tabbed_list_str(strdict.values())
+
         logging.info(sheet_name + " keys: " + keystr)
-        logging.info(sheet_name + " vals: " + valstr)
+        # logging.info(sheet_name + " vals: " + valstr)
         #
         # for k,v in strdict.items():
         #     test = {k:v}
@@ -338,7 +341,7 @@ class WebData(object):
         self.append_sheet("Stats", rowdata, sskey)
 
 
-    def get_game_dict(self, ws):
+    def get_game_dict(self, ws, cols):
 
         # build dictionary of all games in the sheet, two level dict
         # bbs_address:game_number:realm_name:(id,occurrences)
@@ -366,22 +369,45 @@ class WebData(object):
                 realms = games[gameval]
 
             realmval = row['realm']
+
+            statsrow = row
+            # We have the capability to prune the columns that make it into
+            # the stats stable, but more data is more better
+            if cols is not None:
+                statsrow = {}
+                for k,v in row.items():
+                    if k == id or k in cols:
+                        statsrow[k] = v
+
             if realmval not in realms:
-                realms[realmval] = (row['id'],1)
+                # initialize a list of one row as second element in tuple
+                realms[realmval] = (statsrow['id'],[statsrow])
             else:
-                realms[realmval] = (row['id'], realms[realmval][1]+1)
+                # append to the rows store din the second element of the tuple
+                realms[realmval][1].append(statsrow)
+
+        # logging.debug("Game Dict:\n" + pformat(gamedict))
         return gamedict
 
 
     def append_stats_rows(self, game_rows, num_bins, sskey=None):
 
         row_bins = bin_list(game_rows, num_bins)
+        # logging.debug("Coverted:\n" + pformat(game_rows)+"\n\nTo:\n"+
+        #     pformat(row_bins))
+
+        if len(row_bins) != num_bins:
+            raise Exception("There should only be " + str(num_bins) +
+                            " bins BUT THERE ARE " + str(len(row_bins)))
+
+        rows_written = 0
 
         for cur_bin_index in xrange(len(row_bins)):
             cur_bin = row_bins[cur_bin_index]
             outrow = {}
             outrow['bin_index'] = cur_bin_index
             number_keys = {}
+
             for bin_row in cur_bin:
                 for key, value in bin_row.items():
 
@@ -400,11 +426,11 @@ class WebData(object):
                         else:
                             value = float(value)
 
-                        if key not in outrow:
+                        if value is not None and key not in outrow:
                             outrow[key] = value
                         else:
                             outrow[key] += value
-                    else:
+                    elif value is not None:
                         outrow[key] = value
 
 
@@ -430,16 +456,24 @@ class WebData(object):
             for key, value in hist_row.items():
                 if "rowid" in key:
                     continue
+                elif value is None:
+                    continue
 
                 newkey = key + "_last"
                 # assign the value in the output row for the new key
                 outrow[newkey] = value
 
+            outrow['index'] = rows_written
             self.append_stats_sheet_row(outrow, sskey=sskey)
+            rows_written += 1
+
+        if rows_written != num_bins:
+            raise Exception("There are supposed to be " + str(num_bins) +
+                            " but " + str(rows_written) + " were written")
 
     processing_stats = False
 
-    def process_stats(self, sskey=None):
+    def process_stats(self, cols=None, sskey=None):
         if WebData.processing_stats:
             logging.info("Stats are already being processed")
             return False
@@ -448,14 +482,14 @@ class WebData(object):
             WebData.processing_stats = True
 
             dws = self.get_worksheet("Data", sskey=sskey)
-            gamedict = self.get_game_dict(dws)
+            gamedict = self.get_game_dict(dws, cols)
 
             ws = self.get_worksheet("Stats", sskey=sskey)
             ws.delete_all_rows()
-            logging.debug("After deletinge there are" +
+            logging.debug("After deleting there are" +
                           str(len(ws.get_rows())) + " rows")
 
-            bins = 25
+            bins = 5
 
             for bbs_address, gamerec in gamedict.items():
                 # this line is mainly to seperate sections
@@ -466,19 +500,16 @@ class WebData(object):
                     for realm,tup in realmrec.items():
                         # this line is mainly to seperate sections
                         #ws.insert_row({'realm-name': str(realm)})
-                        id=tup[0]
-                        datapoints = tup[1]
-                        qstr = ('id = ' + str(id) + ' and ' +
-                                'address = ' + str(bbs_address) + ' and ' +
-                                'game = ' + str(game))
+                        gid =tup[0]
+                        rows = tup[1]
 
-                        logging.debug("Requesting rows: " + qstr)
-
-                        rows = dws.get_rows(query=qstr)
-
-                        logging.debug("Retrieved " + str(len(rows)) + " rows")
+                        logging.debug("Retrieved " + str(len(rows)) +
+                                      " rows for " + gid)
 
                         self.append_stats_rows(rows, bins, sskey=sskey)
+
+            logging.debug("After processing stats there are" +
+                          str(len(ws.get_rows())) + " rows")
 
         finally:
             logging.info("Stats are done being processed")
