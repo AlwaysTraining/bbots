@@ -8,7 +8,7 @@ from datetime import datetime
 from datetime import timedelta
 
 # 15 minutes
-SCHEDULER_PERIOD = 60 * 15
+SCHEDULER_PERIOD = 60*15
 
 # it will always be 24 hours for the game period, but you can adjust for
 # testing
@@ -31,53 +31,6 @@ class WebApp(object):
         # self.stats_cols = ['id', 'realm','gold','bank-gold',
         # 'regions-number']
         self.stats_cols = None
-
-        """
-        self.stats_cols = ['id', 'realm', 'advisors-civilian-food-consumption',
-                           'advisors-civilian-food-deficit',
-                           'advisors-civilian-river-food-production',
-                           'advisors-civilian-years-survival',
-                           'army-agents-number', 'army-agents-price',
-                           'army-bombers-number', 'army-bombers-price',
-                           'army-carriers-number', 'army-carriers-price',
-                           'army-food', 'army-headquarters-number',
-                           'army-headquarters-price', 'army-jets-number',
-                           'army-jets-price', 'army-maintenance',
-                           'army-tanks-number', 'army-tanks-price',
-                           'army-troopers-number', 'army-troopers-price',
-                           'army-turrets-number', 'army-turrets-price',
-                           'bank-gold', 'bank-investments', 'failures',
-                           'food-spoilage', 'food-units', 'gold',
-                           'hour-delay-from-midnight-to-first-play',
-                           'last-attempt', 'last-completed-all-turns',
-                           'LocalLackey-tribute-ratio', 'population-food',
-                           'population-growth', 'population-pop-support',
-                           'population-rate', 'population-size',
-                           'population-taxearnings', 'queen-taxes',
-                           'regions-agricultural-foodyield',
-                           'regions-agricultural-number',
-                           'regions-coastal-earnings', 'regions-coastal-number',
-                           'regions-desert-earnings', 'regions-desert-number',
-                           'regions-industrial-number',
-                           'regions-industrial-zonemanufacturing-bombers-allocation',
-                           'regions-industrial-zonemanufacturing-bombers-production',
-                           'regions-industrial-zonemanufacturing-carriers-allocation',
-                           'regions-industrial-zonemanufacturing-carriers-production',
-                           'regions-industrial-zonemanufacturing-jets-allocation',
-                           'regions-industrial-zonemanufacturing-jets-production',
-                           'regions-industrial-zonemanufacturing-tanks-allocation',
-                           'regions-industrial-zonemanufacturing-tanks-production',
-                           'regions-industrial-zonemanufacturing-troopers-allocation',
-                           'regions-industrial-zonemanufacturing-troopers-production',
-                           'regions-industrial-zonemanufacturing-turrets-allocation',
-                           'regions-industrial-zonemanufacturing-turrets-production',
-                           'regions-number-affordable', 'regions-price',regions-maintenance', 'regions-mountain-earnings',
-                           'regions-mountain-number', 'regions-number',
-                           'regions-river-number', 'regions-technology-number',
-                           'regions-urban-number', 'successes', 'turns-score',
-                           'turns-years-freedom']
-        """
-
 
     def clean_stats(self, stats, app):
         for k,v in app.options.items():
@@ -126,6 +79,7 @@ class WebApp(object):
         self.data.update_rec(rec)
         ui_row_num = self.webui.on_game_in_progress(rec)
         s = None
+        logdata = rec['force_record_data']
 
         try:
             s = Session(rec)
@@ -135,7 +89,7 @@ class WebApp(object):
                 rec['status'] = "success"
                 if s.app.metadata.used_all_turns:
                     rec['last_completed_all_turns'] = datetime.now()
-                    self.process_stats_data(s)
+                    logdata = True
             else:
                 rec['failures'] += 1
                 rec['status'] = "failure"
@@ -143,6 +97,10 @@ class WebApp(object):
             logging.error("An exception escaped from the session object")
             logging.exception(e)
         finally:
+
+            if logdata:
+                logging.info("Updating data statistics")
+                self.process_stats_data(s)
 
             logging.info("Updating persistant information")
             self.data.update_rec(rec)
