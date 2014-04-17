@@ -152,8 +152,8 @@ class WebData(object):
         return e,p
 
     def load_ss(self):
-        logging.debug("Loading spreadsheet")
-        self.sskey = '0AlItClzrqP_edHoxMmlOcTV3NHJTbU4wZDJGQXVTTXc'
+        self.get_sskey()
+        # self.sskey = '0AlItClzrqP_edHoxMmlOcTV3NHJTbU4wZDJGQXVTTXc'
         self.ss = gdata.spreadsheet.service.SpreadsheetsService()
 
         self.ss.email = self.get_timestamp()[0]
@@ -318,11 +318,11 @@ class WebData(object):
 
         if sskey is None:
             sskey = self.get_sskey()
-
-        keystr = self.get_tabbed_list_str(strdict.keys())
-        valstr = self.get_tabbed_list_str(strdict.values())
-
-        logging.info(sheet_name + " keys: " + keystr)
+        #
+        # keystr = self.get_tabbed_list_str(strdict.keys())
+        # valstr = self.get_tabbed_list_str(strdict.values())
+        #
+        # logging.info(sheet_name + " keys: " + keystr)
         # logging.info(sheet_name + " vals: " + valstr)
         #
         # for k,v in strdict.items():

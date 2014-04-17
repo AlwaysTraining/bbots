@@ -8,7 +8,7 @@ from datetime import datetime
 from datetime import timedelta
 
 # 15 minutes
-SCHEDULER_PERIOD = 10
+SCHEDULER_PERIOD = 60 * 15
 
 # it will always be 24 hours for the game period, but you can adjust for
 # testing
@@ -135,7 +135,7 @@ class WebApp(object):
                 rec['status'] = "success"
                 if s.app.metadata.used_all_turns:
                     rec['last_completed_all_turns'] = datetime.now()
-                self.process_stats_data(s)
+                    self.process_stats_data(s)
             else:
                 rec['failures'] += 1
                 rec['status'] = "failure"
@@ -189,7 +189,7 @@ class WebApp(object):
             time_since_last_play = now - last_attempt
 
             required_time_since_last_play = timedelta(minutes=random.randint(
-                45*12,75*12))
+                45,75))
 
             if time_since_last_play < required_time_since_last_play:
                 logging.debug("we just played: " + str(time_since_last_play) +
