@@ -319,10 +319,11 @@ class WebData(object):
         if sskey is None:
             sskey = self.get_sskey()
         #
-        # keystr = self.get_tabbed_list_str(strdict.keys())
+        keystr = self.get_tabbed_list_str(strdict.keys())
+        logging.info(sheet_name + " keys: " + keystr)
+
         # valstr = self.get_tabbed_list_str(strdict.values())
         #
-        # logging.info(sheet_name + " keys: " + keystr)
         # logging.info(sheet_name + " vals: " + valstr)
         #
         # for k,v in strdict.items():
