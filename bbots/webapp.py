@@ -101,7 +101,7 @@ class WebApp(object):
             try:
                 if logdata:
                     logging.info("Updating data statistics")
-                    self.process_stats_data(s, cols=self.stats_cols)
+                    self.process_stats_data(s)
             except Exception as e2:
                 logging.error("An exception occurred while processing stats")
                 logging.exception(e2)
