@@ -8,7 +8,7 @@ from datetime import datetime
 from datetime import timedelta
 
 # 15 minutes
-SCHEDULER_PERIOD = 10
+SCHEDULER_PERIOD = 1000
 
 # it will always be 24 hours for the game period, but you can adjust for
 # testing
@@ -27,10 +27,9 @@ class WebApp(object):
         self.webui.bbotslogfile = bbotslogfile
         self.webui.weblogfile = weblogfile
         self.in_task = False
-
-        self.stats_cols = ['id', 'realm',
-            'regions-number','score','networth']
         self.stats_cols = None
+        # self.stats_cols = ['id', 'realm',
+        #     'regions-number','score', 'networth']
 
     def clean_stats(self, stats, app):
         for k,v in app.options.items():
@@ -57,7 +56,7 @@ class WebApp(object):
 
     def process_stats_data(self, s):
         # blindly dump all parsed game data to dictionary
-        stats = s.app.data.get_realm_dict(allow_null=True)
+        stats = s.app.data.get_realm_dict(allow_null=False)
         # clean stats table for sample
         stats = self.clean_stats(stats, s.app)
         key = self.data.get_sskey()
@@ -151,7 +150,7 @@ class WebApp(object):
             time_since_last_play = now - last_attempt
 
             required_time_since_last_play = timedelta(minutes=random.randint(
-                45,75))
+                45,75)) # put me back
 
             if time_since_last_play < required_time_since_last_play:
                 logging.debug("we just played: " + str(time_since_last_play) +

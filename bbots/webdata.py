@@ -102,8 +102,8 @@ def bin_list(terms, numbins):
 class WebData(object):
 
     def get_feed(self,query):
-        return self.ss.GetCellsFeed(self.sskey, query=query,
-                                    visibility='public', projection='values')
+        return self.ss.GetCellsFeed(self.sskey, query=query)
+                                    # visibility='public', projection='values')
 
     def query_columns(self):
         """
@@ -319,19 +319,25 @@ class WebData(object):
         if sskey is None:
             sskey = self.get_sskey()
         #
-        keystr = self.get_tabbed_list_str(strdict.keys())
-        logging.info(sheet_name + " keys: " + keystr)
+        # keystr = self.get_tabbed_list_str(strdict.keys())
+        #  logging.info(sheet_name + " info: " + keystr)
 
         # valstr = self.get_tabbed_list_str(strdict.values())
         #
         # logging.info(sheet_name + " vals: " + valstr)
         #
-        # for k,v in strdict.items():
-        #     test = {k:v}
+        # for k, v in strdict.items():
+        #     test = {k: v}
         #     logging.debug("Inserting " + k + "\t: " + v)
         #     self.get_worksheet(sheet_name, sskey=sskey).insert_row(test)
 
-        self.get_worksheet(sheet_name,sskey=sskey).insert_row(strdict)
+        try:
+            self.get_worksheet(sheet_name,sskey=sskey).insert_row(strdict)
+        except Exception as e:
+            # logging.info('caught: ' + str(e.message))
+            if ('Blank rows cannot be written; use delete instead.' not in
+                    str(e.message)):
+                raise e
 
 
 
@@ -406,7 +412,7 @@ class WebData(object):
         for cur_bin_index in xrange(len(row_bins)):
             cur_bin = row_bins[cur_bin_index]
             outrow = {}
-            outrow['bin_index'] = cur_bin_index
+            outrow['bin-index'] = cur_bin_index
             number_keys = {}
 
             for bin_row in cur_bin:
@@ -432,14 +438,18 @@ class WebData(object):
                         else:
                             outrow[key] += value
                     elif value is not None:
+                    #else:
                         outrow[key] = value
 
 
             # perform averaging of all stats in bins for each row for total history
             for number_key, n in number_keys.items():
-                outrow[number_key] /= n
+                try:
+                    outrow[number_key] /= n
+                except:
+                    raise Exception("Mixed data in " + str(number_key))
 
-            # Now update the "last n" rows for the imediate history
+            # Now update the "last n" rows for the immediate history
 
             # calculate the n'th row from the last index
             hist_bin_index = len(game_rows) - num_bins + cur_bin_index
@@ -460,11 +470,12 @@ class WebData(object):
                 elif value is None:
                     continue
 
-                newkey = key + "_last"
+                newkey = key + "-last"
                 # assign the value in the output row for the new key
                 outrow[newkey] = value
 
             outrow['index'] = rows_written
+            # logging.info("Sending row: " + str(outrow))
             self.append_stats_sheet_row(outrow, sskey=sskey)
             rows_written += 1
 
@@ -480,14 +491,18 @@ class WebData(object):
             return False
 
         try:
+            logging.info("Stats being processed for data fields: " + str(cols))
             WebData.processing_stats = True
 
             dws = self.get_worksheet("Data", sskey=sskey)
             gamedict = self.get_game_dict(dws, cols)
 
+            #logging.info("Got stats game dictionsry: \n" + pformat(gamedict))
+
             ws = self.get_worksheet("Stats", sskey=sskey)
+            logging.info("Deleting rows, this takes a while...")
             ws.delete_all_rows()
-            logging.debug("After deleting there are" +
+            logging.info("After deleting there are " +
                           str(len(ws.get_rows())) + " rows")
 
             bins = 5
@@ -505,7 +520,7 @@ class WebData(object):
                         rows = tup[1]
 
                         logging.debug("Retrieved " + str(len(rows)) +
-                                      " rows for " + gid)
+                                      " data rows for " + gid)
 
                         self.append_stats_rows(rows, bins, sskey=sskey)
 
