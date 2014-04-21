@@ -152,7 +152,7 @@ class WebData(object):
         return e,p
 
     def load_ss(self):
-        self.get_sskey()
+        sskey = self.get_sskey()
         # self.sskey = '0AlItClzrqP_edHoxMmlOcTV3NHJTbU4wZDJGQXVTTXc'
         self.ss = gdata.spreadsheet.service.SpreadsheetsService()
 
@@ -163,6 +163,16 @@ class WebData(object):
 
         self.ss_columns = self.query_columns()
         self.ids = self.query_ids()
+
+        serverSheet = self.get_worksheet('server',sskey)
+        serverRows = serverSheet.get_rows()
+        chartCol = []
+        for r in serverRows:
+            logging.info("Server row: " + str(r))
+            if ('charts' in r):
+                chartCol.append(r['charts'])
+        self.chart_html = '\n'.join(chartCol)
+
 
 
     def __init__(self, con):

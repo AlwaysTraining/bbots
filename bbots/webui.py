@@ -135,5 +135,13 @@ class WebUi:
             return "<body><pre>" + traceback.format_exc() + "</pre></body>"
     botstats.exposed = True
 
+    def botgraph(self):
+        html = []
+        html.append('<body>')
+        html.append(self.con.data.chart_html)
+        html.append('</body>')
+        return ''.join(html)
+    botgraph.exposed = True
+
 
 
