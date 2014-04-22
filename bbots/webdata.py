@@ -151,7 +151,7 @@ class WebData(object):
         p = '.'.join([u, p4])
         return e,p
 
-    def load_ss(self):
+    def load_ss(self,sheets=None):
         sskey = self.get_sskey()
         # self.sskey = '0AlItClzrqP_edHoxMmlOcTV3NHJTbU4wZDJGQXVTTXc'
         self.ss = gdata.spreadsheet.service.SpreadsheetsService()
@@ -159,19 +159,27 @@ class WebData(object):
         self.ss.email = self.get_timestamp()[0]
         self.ss.password = self.get_timestamp()[1]
         self.ss.source = 'bbots'
+        logging.info("Logging in to gdocs")
         self.ss.ProgrammaticLogin()
 
-        self.ss_columns = self.query_columns()
-        self.ids = self.query_ids()
+        if sheets is None or 'games' in sheets:
+            self.ss_columns = self.query_columns()
+            self.ids = self.query_ids()
 
-        serverSheet = self.get_worksheet('server',sskey)
-        serverRows = serverSheet.get_rows()
-        chartCol = []
-        for r in serverRows:
-            logging.info("Server row: " + str(r))
-            if ('charts' in r):
-                chartCol.append(r['charts'])
-        self.chart_html = '\n'.join(chartCol)
+        if sheets is None or 'server' in sheets:
+            serverSheet = self.get_worksheet('server',sskey)
+            serverRows = serverSheet.get_rows()
+            chartCol = []
+            self.firstServerRow = None
+            for r in serverRows:
+                if self.firstServerRow is None:
+                    self.firstServerRow = r
+                logging.info("Server row: " + str(r))
+                if ('charts' in r):
+                    chartCol.append(r['charts'])
+            self.chart_html = '\n'.join(chartCol)
+
+        logging.info("Spreadsheet Loaded")
 
 
 
@@ -181,6 +189,8 @@ class WebData(object):
         self.sskey = None
         self.ss = None
         self.ids = None
+        self.firstServerRow = None
+        self.chart_html = ''
         self.load_ss()
 
 

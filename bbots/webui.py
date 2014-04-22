@@ -5,8 +5,10 @@ from subprocess import Popen
 from subprocess import PIPE
 
 import bbot.botlog
+import bbot.Utils
 import traceback
 import time
+import logging
 
 
 DEFAULT_REFRESH_TIME = 60
@@ -137,10 +139,65 @@ class WebUi:
 
     def botgraph(self):
         html = []
+        self.con.data.load_ss(['server'])
         html.append('<body>')
         html.append(self.con.data.chart_html)
         html.append('</body>')
         return ''.join(html)
+    botgraph.exposed = True
+
+    def get_app_value(self,key,secret=False):
+        return self.con.data.get_app_value(key,secret)
+
+    def botstatusmail(self):
+        html = []
+        self.con.data.load_ss(['server'])
+
+
+        to = self.get_app_value('notify')
+        if isinstance(to, basestring):
+            to = [to]
+
+        logging.info("Sending Status email to " + str(to))
+
+        files = []
+
+        subject = "Status Mail"
+
+        body = "----====----\n"
+        body = "bbots status\n"
+        body = "----====----\n\n"
+
+        try:
+
+            start = time.time()
+            sskey = self.con.data.get_sskey()
+            self.con.data.process_stats(sskey=sskey, cols=self.con.stats_cols)
+            body += ("Stats recalculated in " +
+                    str( round(time.time() - start) / 60.0,1) +
+                    " minutes\n\n")
+        except:
+            body += ("Stats calculation failed in " +
+                     str(round(time.time() - start) / 60.0, 1) +
+                     " minutes\n\n" +
+                     traceback.format_exc() + "\n\n")
+
+        body += self.con.data.chart_html
+
+        bbot.Utils.send_mail(
+            to,
+            '[bbots] ' + subject,
+            body,
+            _from=self.get_app_value('smtp_user'),
+            files=files,
+            server=self.get_app_value('smtp_server'),
+            port=self.get_app_value('smtp_port'),
+            server_user=self.get_app_value('smtp_user'),
+            server_user_pass=self.get_app_value('smtp_password',secret=True))
+
+
+
+
     botgraph.exposed = True
 
 
