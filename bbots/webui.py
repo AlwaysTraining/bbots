@@ -149,7 +149,10 @@ class WebUi:
     def get_app_value(self,key,secret=False):
         return self.con.data.get_app_value(key,secret)
 
-    def botstatusmail(self):
+    def botstatusmail(self,recalc=True):
+
+        logging.info("Recalc is: " + str(recalc))
+        recalc = bool(recalc)
         html = []
         self.con.data.load_ss(['server'])
 
@@ -162,43 +165,64 @@ class WebUi:
 
         files = []
 
-        subject = "Status Mail"
+        subject = "Status"
 
-        body = "----====----\n"
-        body = "bbots status\n"
-        body = "----====----\n\n"
+        body = "<html><body>"
+        body += "<h1>bbots status</h1>"
+        body += "<hr>"
+        mins = 0
 
-        try:
+        if recalc:
+            try:
 
-            start = time.time()
-            sskey = self.con.data.get_sskey()
-            self.con.data.process_stats(sskey=sskey, cols=self.con.stats_cols)
-            body += ("Stats recalculated in " +
-                    str( round(time.time() - start) / 60.0,1) +
-                    " minutes\n\n")
-        except:
-            body += ("Stats calculation failed in " +
-                     str(round(time.time() - start) / 60.0, 1) +
-                     " minutes\n\n" +
-                     traceback.format_exc() + "\n\n")
+                start = time.time()
+                sskey = self.con.data.get_sskey()
+                self.con.data.process_stats(sskey=sskey, cols=self.con.stats_cols)
+                mins = (time.time() - start) / 60
+                mins = round(mins,1)
+                body += ("Stats recalculated in " + str(mins) + " minutes\n\n")
+            except:
+                body += ("Stats recalculation failed in " + str(mins) +
+                         "minutes\n\n")
 
-        body += self.con.data.chart_html
+        body += """
 
+<p>
+<a href="http://54.84.147.13:3306/botgraph" target="_blank">
+<img src="https://docs.google.com/spreadsheet/oimg?key=0AlItClzrqP_edHoxMmlOcTV3NHJTbU4wZDJGQXVTTXc&oid=13&zx=xwypdbqbzbmo" />
+</a>
+</p>
+
+<p>
+
+<a href="http://54.84.147.13:3306/botgraph">graphs</a>
+<a href="http://54.84.147.13:3306/botdash">dashboard</a>
+<a href=https://docs.google.com/spreadsheet/ccc?key=0AlItClzrqP_edHoxMmlOcTV3NHJTbU4wZDJGQXVTTXc&usp=drive_web#gid=0>spreadsheet</a>
+<a href="http://54.84.147.13:3306/botlog">log</a>
+<a href="http://54.84.147.13:3306/botlog">weblog</a>
+
+</p>
+"""
+        body += "</body></html>"
+
+        logging.info("Stats recalulated in " + str(min) + " minutes")
+        logging.info("sending status email to: " + str(to))
         bbot.Utils.send_mail(
             to,
             '[bbots] ' + subject,
             body,
-            _from=self.get_app_value('smtp_user'),
+            _from=self.get_app_value('smtpuser'),
             files=files,
-            server=self.get_app_value('smtp_server'),
-            port=self.get_app_value('smtp_port'),
-            server_user=self.get_app_value('smtp_user'),
-            server_user_pass=self.get_app_value('smtp_password',secret=True))
+            server=self.get_app_value('smtpserver'),
+            port=self.get_app_value('smtpport'),
+            server_user=self.get_app_value('smtpuser'),
+            server_user_pass=self.get_app_value('smtppassword',secret=True),
+            preformatted=False)
 
+        return body
 
+    botstatusmail.exposed = True
 
-
-    botgraph.exposed = True
 
 
 

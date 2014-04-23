@@ -26,6 +26,7 @@ def main():
             os.getcwd(),'webapp.log')
 
     app = WebApp(botlogfile, weblogfile)
+
     wd = cherrypy.process.plugins.BackgroundTask(app.scheduler_period,
                                                  app.scheduler_task)
     wd.start()

@@ -7,8 +7,8 @@ import logging
 from datetime import datetime
 from datetime import timedelta
 
-# 15 minutes
-SCHEDULER_PERIOD = 6000
+# 5 minutes
+SCHEDULER_PERIOD = 5*60
 
 # it will always be 24 hours for the game period, but you can adjust for
 # testing
@@ -28,6 +28,8 @@ class WebApp(object):
         self.webui.weblogfile = weblogfile
         self.in_task = False
         self.stats_cols = None
+        # Because I can, I regenerate stats for all columns, but if you want
+        # to do them all, set the cols to None
         # self.stats_cols = ['id', 'realm',
         #     'regions-number','score', 'networth']
 
@@ -54,14 +56,15 @@ class WebApp(object):
         return newstats
 
 
-    def process_stats_data(self, s):
+    def process_stats_data(self, s, recalc=True):
         # blindly dump all parsed game data to dictionary
         stats = s.app.data.get_realm_dict(allow_null=False)
         # clean stats table for sample
         stats = self.clean_stats(stats, s.app)
         key = self.data.get_sskey()
         self.data.append_data_sheet_row(stats, sskey=key)
-        self.data.process_stats(sskey=key, cols=self.stats_cols)
+        if recalc:
+            self.data.process_stats(sskey=key, cols=self.stats_cols)
 
     def play_game(self, rec):
         """
@@ -100,7 +103,7 @@ class WebApp(object):
             try:
                 if logdata:
                     logging.info("Updating data statistics")
-                    self.process_stats_data(s)
+                    self.process_stats_data(s,recalc=False)
             except Exception as e2:
                 logging.error("An exception occurred while processing stats")
                 logging.exception(e2)

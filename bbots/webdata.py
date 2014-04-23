@@ -1,6 +1,7 @@
 import gdata.spreadsheet.service
 import logging
 from google_spreadsheet.api import SpreadsheetAPI
+import time
 from pprint import pformat
 import operator
 
@@ -174,7 +175,7 @@ class WebData(object):
             for r in serverRows:
                 if self.firstServerRow is None:
                     self.firstServerRow = r
-                logging.info("Server row: " + str(r))
+               #  logging.info("Server row: " + str(r))
                 if ('charts' in r):
                     chartCol.append(r['charts'])
             self.chart_html = '\n'.join(chartCol)
@@ -193,6 +194,9 @@ class WebData(object):
         self.chart_html = ''
         self.load_ss()
 
+    def get_app_value(self,key,secret=False):
+        key = key.replace('_', '-')
+        return self.firstServerRow[key]
 
     def get_record_query(self, rec_id):
         row = self.ids.index(rec_id) + 2
@@ -352,7 +356,10 @@ class WebData(object):
         #     self.get_worksheet(sheet_name, sskey=sskey).insert_row(test)
 
         try:
+            # This is just to cut google doc a break, give it a sleep
+            time.sleep(1)
             self.get_worksheet(sheet_name,sskey=sskey).insert_row(strdict)
+
         except Exception as e:
             # logging.info('caught: ' + str(e.message))
             if ('Blank rows cannot be written; use delete instead.' not in
