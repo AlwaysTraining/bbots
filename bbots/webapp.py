@@ -101,6 +101,9 @@ class WebApp(object):
         finally:
 
             try:
+                if not logdata and s.app.metadata.used_all_turns:
+                    logdata = True
+
                 if logdata:
                     logging.info("Updating data statistics")
                     self.process_stats_data(s,recalc=False)
