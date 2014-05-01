@@ -189,7 +189,7 @@ class WebUi:
 
 <p>
 <a href="http://54.84.147.13:3306/botgraph" target="_blank">
-<img src=""" + self.get_app_value('chart_imgs') + """ />
+<img src=""" + self.get_app_value('chartimgs') + """ />
 </a>
 </p>
 
