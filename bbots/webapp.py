@@ -8,7 +8,7 @@ from datetime import datetime
 from datetime import timedelta
 
 # 5 minutes
-SCHEDULER_PERIOD = 5*60
+SCHEDULER_PERIOD = 5
 
 # it will always be 24 hours for the game period, but you can adjust for
 # testing

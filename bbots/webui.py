@@ -189,7 +189,7 @@ class WebUi:
 
 <p>
 <a href="http://54.84.147.13:3306/botgraph" target="_blank">
-<img src="https://docs.google.com/spreadsheet/oimg?key=0AlItClzrqP_edHoxMmlOcTV3NHJTbU4wZDJGQXVTTXc&oid=13&zx=xwypdbqbzbmo" />
+<img src=""" + self.get_app_value('chart_imgs') + """ />
 </a>
 </p>
 
