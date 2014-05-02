@@ -8,7 +8,7 @@ from datetime import datetime
 from datetime import timedelta
 
 # 5 minutes
-SCHEDULER_PERIOD = 5
+SCHEDULER_PERIOD = 5 * 60
 
 # it will always be 24 hours for the game period, but you can adjust for
 # testing
@@ -155,8 +155,8 @@ class WebApp(object):
         if last_attempt is not None:
             time_since_last_play = now - last_attempt
 
-            required_time_since_last_play = timedelta(minutes=random.randint(
-                45,75)) # put me back
+            required_time_since_last_play = timedelta(
+                hours=rec['hour_delay_redial'])
 
             if time_since_last_play < required_time_since_last_play:
                 logging.debug("we just played: " + str(time_since_last_play) +
