@@ -191,7 +191,7 @@ class WebApp(object):
     def git_pull(self):
         try:
             appdir = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
-            cmd = "cd " + appdir + " && ./pull"
+            cmd = "cd " + appdir + " && ./pull.sh"
             logging.debug("Running: " + cmd)
 
             output = subprocess.Popen(cmd, stdout=subprocess.PIPE,
