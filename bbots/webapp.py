@@ -1,4 +1,5 @@
 import time
+import os, subprocess
 from bbots.webdata import WebData
 from bbots.webui import WebUi
 from bbots.session import Session
@@ -187,6 +188,24 @@ class WebApp(object):
         return self.play_game(rec)
 
 
+    def git_pull(self):
+        try:
+            appdir = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+            cmd = "cd " + appdir + " && ./pull"
+            logging.debug("Running: " + cmd)
+
+            output = subprocess.Popen(cmd, stdout=subprocess.PIPE,
+                                      shell=True).communicate(
+
+            )[0]
+
+            return output
+
+        except Exception, e:
+            logging.exception(e)
+            logging.warn("Could not git changes")
+
+        return "Could not get recent source code changes"
 
     def scheduler_task(self):
         """
@@ -195,11 +214,14 @@ class WebApp(object):
         try:
             if self.in_task == True:
                 raise Exception("Currently in task!")
-            self.in_task = False
+            self.in_task = True
 
             sleeptime = random.randint(0,SCHEDULER_PERIOD/3)
             logging.info("Randomly sleeping for " + str(round(sleeptime/60.0,1)) + " minutes")
             time.sleep(sleeptime)
+
+            self.git_pull()
+
             self.data.load_ss()
             ids = list(self.data.ids)
             random.shuffle(ids)
@@ -210,7 +232,9 @@ class WebApp(object):
             logging.error("Exception was thrown out to tasking function")
             logging.exception(ex)
         finally:
+            self.git_pull()
             self.in_task = False
+
 
 
 
