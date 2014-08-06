@@ -82,7 +82,7 @@ class WebUi:
 
         if bbot.botlog.tracefilepath is not None:
             html.append("<pre>")
-            cmd = "$(which tail) -n 50 " + str(bbot.botlog.logfilepath)
+            cmd = "$(which tail) -n 50 " + str(bbot.botlog.tracefilepath)
             output = Popen(cmd, stdout=PIPE, shell=True).communicate()[0]
             html.append(output)
             html.append("</pre>")

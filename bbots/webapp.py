@@ -20,7 +20,7 @@ def get_midnight():
     return start
 
 class WebApp(object):
-    def __init__(self,bbotslogfile, weblogfile):
+    def __init__(self,bbotslogfile, weblogfile, data_dir='.'):
         self.scheduler_period = SCHEDULER_PERIOD
         self.data = WebData(self)
         self.webui = WebUi(self)
@@ -28,6 +28,7 @@ class WebApp(object):
         self.webui.weblogfile = weblogfile
         self.in_task = False
         self.stats_cols = None
+        self.data_dir = data_dir
         # Because I can, I regenerate stats for all columns, but if you want
         # to do them all, set the cols to None
         # self.stats_cols = ['id', 'realm',
@@ -77,6 +78,7 @@ class WebApp(object):
         now = datetime.now()
         rec['last_attempt'] = now
         rec['status'] = "in progress"
+        rec['data_dir'] = self.data_dir
 
         self.data.update_rec(rec)
         ui_row_num = self.webui.on_game_in_progress(rec)

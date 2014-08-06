@@ -3,8 +3,6 @@ import logging
 
 
 def query(key):
-    if key == 'data_dir':
-        return '.'
     raise Exception("Need value provided for: %s" % key)
 
 

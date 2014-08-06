@@ -26,6 +26,7 @@ def is_float(s):
     except ValueError:
         return False
 
+#coppied and pasted time functionality to bbot Util, maintain in both places
 TIME_FORMAT_STR="%a %b %d %H:%M:%S %Y"
 
 def string_to_date(s):

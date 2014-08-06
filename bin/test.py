@@ -97,6 +97,17 @@ def test_bin_list():
     list = bin_list(inputlist, 5)
     print str(inputlist), '->', str(list)
 
+
+import cPickle
+from datetime import datetime
+import time
+
+def test_serialize():
+    d = datetime.now()
+    f = 1.2
+    import
+
+
 def main():
     pass
 
