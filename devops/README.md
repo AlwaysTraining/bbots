@@ -1,0 +1,1 @@
+These scripts should be placed in the directory above the source root.  I should softlink them, or make an install script, but at least thea are finally in source control.  The app has never been redeployed so no reason to automate install at this time
